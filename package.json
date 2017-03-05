@@ -1,0 +1,33 @@
+{
+  "name": "url-shortener",
+  "version": "1.0.0",
+  "description": "An implamentation of freeCodeCamps's URL Shortener Microservice.",
+  "main": "server.js",
+  "start": "node server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/devNoiseConsulting/URL-Shortener.git"
+  },
+  "keywords": [
+    "freecodecamp",
+    "url",
+    "shortener"
+  ],
+  "author": "Michael Flynn",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/devNoiseConsulting/URL-Shortener/issues"
+  },
+  "homepage": "https://github.com/devNoiseConsulting/URL-Shortener#readme",
+  "dependencies": {
+    "express": "^4.15.0",
+    "mongodb": "^2.2.24",
+    "valid-url": "^1.0.9"
+  },
+  "engines": {
+    "node": "6.10.0"
+  }
+}
