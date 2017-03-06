@@ -1,6 +1,10 @@
-var express = require('express');
+var mongo = require('mongodb').MongoClient;
 var validUrl = require('valid-url');
+var db = require('./db');
+var express = require('express');
+
 var app = express();
+let dbUrl = "mongodb://" + process.env.DBUSER + ":" + process.env.DBPASSWORD + "@" + process.env.DBURL;
 
 app.set('port', (process.env.PORT || 8080));
 
@@ -11,19 +15,61 @@ app.get(/^\/new\/.*/, function(req, res) {
     var url = req.originalUrl.substr(5);
     if (validUrl.isUri(url)) {
         // Need to work on the mongo storage part
-        var id = Math.floor(Math.random() * 90000) + 10000;
-        output = {
-            "original_url": url,
-            "short_url": id.toString(36)
-        };
+        var collection = db.get().collection('smaller');
+        if (collection) {
+            collection.findOne({
+                $query: {},
+                $orderby: {
+                    _id: -1
+                }
+            }, gotMaxId);
+        }
+    } else {
+        res.end(JSON.stringify(output, null, 2));
     }
-    res.end(JSON.stringify(output, null, 2));
+
+    function gotMaxId(err, document) {
+        output = {
+            "error": "Something went wrong with the database."
+        };
+        if (err) {
+            res.end(JSON.stringify(output, null, 2));
+        }
+        if (document) {
+            document._id++;
+            document.url = url;
+            var shortUrl = 'http://' + req.get('host') + '/' + document._id.toString(36);
+            try {
+                collection.insert(document);
+                output = {
+                    "original_url": url,
+                    "short_url": shortUrl
+                };
+                res.end(JSON.stringify(output, null, 2));
+            } catch (e) {
+                res.end(JSON.stringify(output, null, 2));
+            }
+        }
+    }
 });
 
 app.get('/:id', function(req, res) {
-    // Take ID and try to retrive the URL from mongo.
-    var url = "http://www.example.com";
-    res.location(url);
+    var linkId = parseInt(req.params.id, 36);
+    var collection = db.get().collection('smaller');
+    if (collection) {
+        collection.findOne({
+            _id: linkId
+        }, redirect);
+    }
+
+    function redirect(err, document) {
+        if (err) {
+            res.location('/');
+        }
+        if (document) {
+            res.redirect(document.url);
+        }
+    }
 });
 
 app.get('/', function(req, res) {
@@ -37,6 +83,14 @@ app.get('/', function(req, res) {
     res.end(JSON.stringify(output, null, 2));
 });
 
-app.listen(app.get('port'), function() {
-    console.log('URL Shortener microservice is listening on port ', app.get('port'));
+db.connect(dbUrl, function(err) {
+    if (err) {
+        console.log('Unable to connect to Mongo.');
+        process.exit(1);
+    } else {
+        app.listen(app.get('port'), function() {
+            console.log('URL Shortener microservice is listening on port ', app.get('port'));
+            console.log(dbUrl);
+        });
+    }
 });
