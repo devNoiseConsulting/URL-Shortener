@@ -28,6 +28,6 @@
     "valid-url": "^1.0.9"
   },
   "engines": {
-    "node": "6.10.0"
+    "node": "6.x"
   }
 }
